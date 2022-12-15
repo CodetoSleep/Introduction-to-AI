@@ -14,7 +14,7 @@ class Game:
         icon = pygame.image.load('./img/icon.jpg')
         self.icon = pygame.display.set_icon(icon)
         self.grid = (240,255,240)
-        self.line_width = 4
+        self.line_width = 5
         self.gamerunning = True
         self.green = (0,255,0)
         self.red = (255,0,0)
@@ -31,6 +31,7 @@ class Game:
         self.again_rect = Rect(self.screen_width//2-80,self.screen_height//2,160,50)
         self.winner = 0
         self.game_over = False
+        self.check_turn = True
     def music(self, url):
         Sound = mixer.Sound(url)
         Sound.play()
@@ -97,7 +98,14 @@ class Game:
         again_img = self.font.render(again_text, True, self.blue)
         pygame.draw.rect(self.screen, self.green, self.again_rect)
         self.screen.blit(again_img, (self.screen_width // 2 - 80, self.screen_height // 2 + 10))
-
+    def random_move(self):
+        x_pos = random.randint(0,4)
+        y_pos = random.randint(0,4)
+        while (self.markers[x_pos][y_pos]!=0):
+            x_pos = random.randint(0,4)
+            y_pos = random.randint(0,4)
+        self.markers[x_pos][y_pos]=-1
+        self.check_turn = True
     def run(self):
         print(self.markers)
         while self.gamerunning:
@@ -107,17 +115,22 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.gamerunning = False
                 if self.game_over == False:
-                    if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
-                        self.clicked = True
-                    if event.type == pygame.MOUSEBUTTONUP and self.clicked == True:
-                        self.clicked = False
-                        self.pos = pygame.mouse.get_pos()
-                        cell_x = self.pos[0]//120
-                        cell_y = self.pos[1]//120
-                        if self.markers[cell_x][cell_y] == 0:
-                            self.markers[cell_x][cell_y] = self.player
-                            self.player *= -1
-                            self.check_game_over()
+                    if self.check_turn:
+                        if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
+                            self.clicked = True
+                        if event.type == pygame.MOUSEBUTTONUP and self.clicked == True:
+                            self.clicked = False
+                            self.pos = pygame.mouse.get_pos()
+                            cell_x = self.pos[0]//120
+                            cell_y = self.pos[1]//120
+                            if self.markers[cell_x][cell_y] == 0:
+                                self.markers[cell_x][cell_y] = self.player
+                                self.check_turn=False
+                                self.check_game_over()
+                                # self.player *= -1
+                    else:
+                        self.random_move()
+                        self.check_game_over()
             if self.game_over == True:
                 self.draw_game_over()
                 if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
