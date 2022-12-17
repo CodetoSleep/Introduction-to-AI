@@ -68,7 +68,7 @@ class Game:
             if self.markers[0][x_pos] + self.markers [1][x_pos] + self.markers [2][x_pos] + self.markers[3][x_pos] + self.markers[4][x_pos] == -5:
                 self.winner = 2
                 self.game_over = True
-                x_pos += 1
+            x_pos += 1
         if self.markers[0][0] + self.markers[1][1] + self.markers [2][2] + self.markers[3][3] + self.markers[4][4] == 5 or self.markers[4][0] + self.markers[3][1] + self.markers[2][2] +self.markers[1][3] +self.markers[0][4]  == 5:
             self.winner = 1
             self.game_over = True
