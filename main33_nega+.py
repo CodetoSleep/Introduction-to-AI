@@ -151,27 +151,23 @@ class AI(Board):
                             x_pos = i
                             y_pos = j
             self.markers[x_pos][y_pos] = aimove
-
     #Negamax
     # def negamax2(self, depth, aimove): 
-
-
     def negamax(self, depth, alpha, beta, aimove): 
         result = self.evaluate(aimove)
         if (result != 0):
             return result
         if (self.is_move_left()==False):
             return 0
-        
         bestScore = -inf
         for i in range(3):
             for j in range(3):
                 if (self.markers[i][j] == 0): 
                     self.markers[i][j] = aimove
-                    # aimove = -aimove
+                    #aimove = -aimove
                     score = -self.negamax(depth - 1, -beta,  -alpha, -aimove)
                     self.markers[i][j] = 0
-                    aimove = -aimove  
+                    #aimove = -aimove  
                     bestScore = max(bestScore, score)
                     alpha = max(alpha, score)
                     if alpha >= beta:
@@ -187,7 +183,7 @@ class AI(Board):
                 for j in range(3):
                     if (self.markers[i][j] == 0):
                         self.markers[i][j] = aimove
-                        score = self.negamax(0, -inf, inf, aimove)
+                        score = -self.negamax(0, -inf, inf, -aimove)
                         self.markers[i][j] = 0
                         if (score > bestScore):
                             bestScore = score
