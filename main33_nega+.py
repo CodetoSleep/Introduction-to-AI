@@ -4,21 +4,16 @@ from pygame import mixer
 from pygame.locals import *
 from math import inf, sqrt, log
 from copy import deepcopy
+import ast
 
-class Node:
-    """
-    # Node
-    The Node class defines a node in a
-    Monte-Carlo Search Tree, with all
-    requisite parameters.
-    """
-    def __init__(self, board, aimove, move):
-        self.wins = 0.0
-        self.games = 0.0
-        self.move = move
-        self.board = board
-        self.player_id = aimove
-        self.children = []
+# class Node:
+#     def __init__(self, board, aimove, move):
+#         self.wins = 0.0
+#         self.games = 0.0
+#         self.move = move
+#         self.board = board
+#         self.player_id = aimove
+#         self.children = []
 
 
 class Board:
@@ -191,8 +186,93 @@ class AI(Board):
                             y_pos = j
             self.markers[x_pos][y_pos] = aimove
 
+class MCTs(Board):
+    def __init__(self):
+        super().__init__()
+        self.numberOfSimulations = 10000
+    def getBoardCopy(self, board):
+        boardCopy = deepcopy(board)
+        return boardCopy
+    def hasMovesLeft(self):
+        for x in range(3):
+            for y in range(3):
+                if self.markers[x][y] == 0:
+                    return True
+        return False
+    def getNextMoves(self, currentBoard, player):
+        nextMoves = []
+        for x in range(3):
+            for y in range (3):
+                if currentBoard[x][y] == 0:
+                    boardCopy = self.getBoardCopy(currentBoard)
+                    boardCopy[x][y] = player
+                    nextMoves.append(boardCopy)
+        return nextMoves
+    def hasWon(self, currentBoard, aimove):
+        x_pos = 0
+        for x in currentBoard:
+            if sum(x) == -3*aimove:
+                return True
+            if sum(x) == 3*aimove:
+                return True
+            if currentBoard[0][x_pos] + currentBoard[1][x_pos] + currentBoard[2][x_pos] == -3*aimove:
+                return True
+            if currentBoard[0][x_pos] + currentBoard[1][x_pos] + currentBoard[2][x_pos] == 3*aimove:
+                return True
+            x_pos += 1
+        if currentBoard[0][0] + currentBoard[1][1] + currentBoard[2][2] == -3*aimove or currentBoard[2][0] + currentBoard[1][1] + currentBoard[0][2] == -3*aimove:
+            return True
+        if currentBoard[0][0] + currentBoard[1][1] + currentBoard[2][2] == 3*aimove or currentBoard[2][0] + currentBoard[1][1] + currentBoard[0][2] == 3*aimove:
+            return True
+        return False
+    def getNextPlayer(self, player):
+        return -player
+    def getBestNextMove(self, currentBoard, aimove):
+        evaluations = {}
+        for generation in range(self.numberOfSimulations):
+            player = aimove
+            boardCopy = self.getBoardCopy(currentBoard)
+            simulationMoves = []
+            
+            nextMoves = self.getNextMoves(currentBoard, player)
+            score = 3 * 3
 
-class Game(AI):
+            while nextMoves != []:
+                roll = random.randint(1, len(nextMoves)) -1
+                boardCopy = nextMoves[roll]
+
+                simulationMoves.append(boardCopy)
+                if self.hasWon(boardCopy, player):
+                    break
+                
+                score -= 1
+
+                player = self.getNextPlayer(aimove)
+                nextMoves = self.getNextMoves(boardCopy,player)
+            
+            firstMove = simulationMoves[0]
+            lastMove = simulationMoves[-1]
+
+            firstMoveKey = repr(firstMove)
+
+            if player == -aimove and self.hasWon(boardCopy,player):
+                score *=-1
+            if firstMoveKey in evaluations:
+                evaluations[firstMoveKey] += score
+            else:
+                evaluations[firstMoveKey] = score
+        bestMove = []
+        highestScore = 0
+        firstRound = True
+
+        for move, score in evaluations.items():
+            if firstRound or score > highestScore:
+                highestScore = score
+                bestMove = ast.literal_eval(move)
+                firstRound = False
+        return bestMove
+
+class Game(AI, MCTs):
     def __init__(self):
         super().__init__()
         pygame.init()
@@ -209,14 +289,17 @@ class Game(AI):
         self.green = (0,255,0)
         self.red = (255,0,0)
         self.blue = (0, 0, 255)
+        self.purple = (255,0,255)
+        self.white = (255,255,255)
         self.clicked = False
         self.pos = (0,0)
         self.music('./sound/blackpink.mp3')
         self.font = pygame.font.SysFont('bitstreamverasans',35, bold=False, italic=False)
         self.again_rect = Rect(self.screen_width//2-80,self.screen_height//2,160,50)
         self.check_turn = None
-        self.mode1_rect = Rect(self.screen_width//2-180,self.screen_height//2-75,360,50)
-        self.mode2_rect = Rect(self.screen_width//2-180,self.screen_height//2+25,360,50)
+        self.mode1_rect = Rect(self.screen_width//2-180,self.screen_height//3-50,360,50)
+        self.mode2_rect = Rect(self.screen_width//2-180,self.screen_height//2-25,360,50)
+        self.mode3_rect = Rect(self.screen_width//2-180,self.screen_height*2//3,360,50)
         self.select_turn1_rect = Rect(self.screen_width//2-180,self.screen_height//2-75,360,50)
         self.select_turn2_rect = Rect(self.screen_width//2-180,self.screen_height//2+25,360,50)
         self.mode = None
@@ -226,6 +309,8 @@ class Game(AI):
         self.algorithm2_rect = Rect(self.screen_width//2-180,self.screen_height//2-25,360,50)
         self.algorithm3_rect = Rect(self.screen_width//2-180,self.screen_height*2//3,360,50)
         self.algorithm = None
+        self.aiplayer1 = None
+        self.aiplayer2 = None 
     def music(self, url):
         Sound = mixer.Sound(url)
         #Sound.play()
@@ -257,6 +342,11 @@ class Game(AI):
         rect2_obj = pygame.draw.rect(self.screen,self.green, self.mode2_rect)
         mode2_box = mode1_img.get_rect(center=rect2_obj.center)
         self.screen.blit(mode2_img, mode2_box)
+
+        mode3_img = self.font.render("Computer vs Computer", True, self.blue)
+        rect3_obj = pygame.draw.rect(self.screen,self.green, self.mode3_rect)
+        mode3_box = mode3_img.get_rect(center=rect3_obj.center)
+        self.screen.blit(mode3_img, mode3_box)
     def draw_turn(self):
         turn1_img = self.font.render("Human first", True, self.blue)
         turn1_obj = pygame.draw.rect(self.screen,self.green, self.select_turn1_rect)
@@ -316,6 +406,8 @@ class Game(AI):
                         self.mode = 1
                     elif self.mode2_rect.collidepoint(self.pos):
                         self.mode = 2
+                    elif self.mode3_rect.collidepoint(self.pos):
+                        self.mode = 3
             else:
                 if self.mode == 1:
                     if self.game_over == False:
@@ -393,7 +485,8 @@ class Game(AI):
                                             self.check_game_over()
                                 else:
                                     if self.algorithm == 1:
-                                        self.random_move(self.ai)
+                                        #self.random_move(self.ai)
+                                        self.markers=self.getBestNextMove(self.markers,self.ai)
                                     elif self.algorithm ==2:
                                         self.minimax_move(self.ai)
                                     elif self.algorithm ==3:
@@ -409,7 +502,6 @@ class Game(AI):
                                     self.pos = pygame.mouse.get_pos()
                                     if self.again_rect.collidepoint(self.pos):
                                         self.game_over = False
-                                        self.player = 1
                                         self.pos = (0,0)
                                         self.markers = []
                                         self.winner = 0
@@ -419,6 +511,83 @@ class Game(AI):
                                             self.markers.append(row)
                                         self.mode = None 
                                         self.algorithm = None
+                elif self.mode ==3:
+                    if self.aiplayer1 is None:
+                        self.draw_algorithm()
+                        aiplayer1_img = self.font.render("Player 1", True, self.white)
+                        aiplayer1_obj = pygame.draw.rect(self.screen,self.purple, (self.screen_width//2-100,50,200,50))
+                        aiplayer1_box = aiplayer1_img.get_rect(center=aiplayer1_obj.center)
+                        self.screen.blit(aiplayer1_img, aiplayer1_box)
+                        if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
+                            self.clicked = True
+                        if event.type == pygame.MOUSEBUTTONUP and self.clicked == True:
+                            self.clicked = False
+                            self.pos = pygame.mouse.get_pos()
+                            if self.algorithm1_rect.collidepoint(self.pos):
+                                self.aiplayer1 = 1
+                            elif self.algorithm2_rect.collidepoint(self.pos):
+                                self.aiplayer1 = 2
+                            elif self.algorithm3_rect.collidepoint(self.pos):
+                                self.aiplayer1 = 3
+                        self.check_turn = True
+                    else:
+                        if self.aiplayer2 is None:
+                            aiplayer2_img = self.font.render("Player 2", True, self.white)
+                            aiplayer2_obj = pygame.draw.rect(self.screen,self.purple, (self.screen_width//2-100,50,200,50))
+                            aiplayer2_box = aiplayer1_img.get_rect(center=aiplayer2_obj.center)
+                            self.screen.blit(aiplayer2_img, aiplayer2_box)
+                            self.draw_algorithm()
+                            if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
+                                self.clicked = True
+                            if event.type == pygame.MOUSEBUTTONUP and self.clicked == True:
+                                self.clicked = False
+                                self.pos = pygame.mouse.get_pos()
+                                if self.algorithm1_rect.collidepoint(self.pos):
+                                    self.aiplayer2 = 1
+                                elif self.algorithm2_rect.collidepoint(self.pos):
+                                    self.aiplayer2 = 2
+                                elif self.algorithm3_rect.collidepoint(self.pos):
+                                    self.aiplayer2 = 3
+                        else:
+                            if self.game_over==False:
+                                if self.check_turn:
+                                    if self.aiplayer1 == 1:
+                                        self.random_move(self.player)
+                                    elif self.aiplayer1 == 2:
+                                        self.minimax_move(self.player)
+                                    elif self.aiplayer1 == 3:
+                                        self.negamax_move(self.player)
+                                    self.check_turn = False
+                                    self.check_game_over()
+                                else:
+                                    if self.aiplayer2 == 1:
+                                        self.random_move(self.player2)
+                                    elif self.aiplayer2 == 2:
+                                        self.minimax_move(self.player2)
+                                    elif self.aiplayer2 == 3:
+                                        self.negamax_move(self.player2)
+                                    self.check_turn = True
+                                    self.check_game_over()   
+                            if self.game_over == True:
+                                    self.draw_game_over()
+                                    if event.type == pygame.MOUSEBUTTONDOWN and self.clicked == False:
+                                        self.clicked = True
+                                    if event.type == pygame.MOUSEBUTTONUP and self.clicked == True:
+                                        self.clicked = False
+                                        self.pos = pygame.mouse.get_pos()
+                                        if self.again_rect.collidepoint(self.pos):
+                                            self.game_over = False
+                                            self.pos = (0,0)
+                                            self.markers = []
+                                            self.winner = 0
+                                            self.check_turn=None
+                                            for i in range (3):
+                                                row = [0]*3
+                                                self.markers.append(row)
+                                            self.mode = None 
+                                            self.algorithm = None       
+                                            self.aiplayer1 = None
+                                            self.aiplayer2 = None                      
             pygame.display.flip()
         pygame.quit()
 
