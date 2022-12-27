@@ -15,7 +15,6 @@ import ast
 #         self.player_id = aimove
 #         self.children = []
 
-
 class Board:
     def __init__(self):
         self.player = 1
@@ -146,8 +145,6 @@ class AI(Board):
                             x_pos = i
                             y_pos = j
             self.markers[x_pos][y_pos] = aimove
-    #Negamax
-    # def negamax2(self, depth, aimove): 
     def negamax(self, depth, alpha, beta, aimove): 
         result = self.evaluate(aimove)
         if (result != 0):
@@ -189,7 +186,7 @@ class AI(Board):
 class MCTs(Board):
     def __init__(self):
         super().__init__()
-        self.numberOfSimulations = 10000
+        self.numberOfSimulations = 15000
     def getBoardCopy(self, board):
         boardCopy = deepcopy(board)
         return boardCopy
@@ -306,15 +303,16 @@ class Game(AI, MCTs):
         self.human = None
         self.ai = None
         self.algorithm1_rect = Rect(self.screen_width//2-180,self.screen_height//3-50,360,50)
-        self.algorithm2_rect = Rect(self.screen_width//2-180,self.screen_height//2-25,360,50)
-        self.algorithm3_rect = Rect(self.screen_width//2-180,self.screen_height*2//3,360,50)
+        self.algorithm2_rect = Rect(self.screen_width//2-180,self.screen_height//2-50,360,50)
+        self.algorithm3_rect = Rect(self.screen_width//2-180,self.screen_height*2//3-50,360,50)
+        self.algorithm4_rect = Rect(self.screen_width//2-180,self.screen_height*5//6-50,360,50)
         self.algorithm = None
         self.aiplayer1 = None
         self.aiplayer2 = None 
     def music(self, url):
         Sound = mixer.Sound(url)
-        #Sound.play()
-        Sound.set_volume(0.7)
+        Sound.play()
+        Sound.set_volume(0.5)
     def create_background(self):
         self.screen.blit(self.backGround, (0,0))
         for x in range (1,3):
@@ -372,6 +370,11 @@ class Game(AI, MCTs):
         algorithm3_obj = pygame.draw.rect(self.screen,self.green, self.algorithm3_rect)
         algorithm3_box = algorithm3_img.get_rect(center=algorithm3_obj.center)
         self.screen.blit(algorithm3_img, algorithm3_box)
+
+        algorithm4_img = self.font.render("Monte Carlo tree search", True, self.blue)
+        algorithm4_obj = pygame.draw.rect(self.screen,self.green, self.algorithm4_rect)
+        algorithm4_box = algorithm4_img.get_rect(center=algorithm4_obj.center)
+        self.screen.blit(algorithm4_img, algorithm4_box)
     def draw_game_over(self):
         if self.winner != 0:
             end_text = "Player " + str(self.winner) + " wins!"
@@ -469,6 +472,8 @@ class Game(AI, MCTs):
                                     self.algorithm = 2
                                 elif self.algorithm3_rect.collidepoint(self.pos):
                                     self.algorithm = 3
+                                elif self.algorithm4_rect.collidepoint(self.pos):
+                                    self.algorithm = 4
                         else:  
                             if self.game_over == False:
                                 if self.check_turn:
@@ -485,12 +490,13 @@ class Game(AI, MCTs):
                                             self.check_game_over()
                                 else:
                                     if self.algorithm == 1:
-                                        #self.random_move(self.ai)
-                                        self.markers=self.getBestNextMove(self.markers,self.ai)
+                                        self.random_move(self.ai)
                                     elif self.algorithm ==2:
                                         self.minimax_move(self.ai)
                                     elif self.algorithm ==3:
                                         self.negamax_move(self.ai)
+                                    elif self.algorithm ==4:
+                                        self.markers=self.getBestNextMove(self.markers,self.ai)
                                     self.check_turn = True
                                     self.check_game_over()
                             if self.game_over == True:
@@ -529,6 +535,8 @@ class Game(AI, MCTs):
                                 self.aiplayer1 = 2
                             elif self.algorithm3_rect.collidepoint(self.pos):
                                 self.aiplayer1 = 3
+                            elif self.algorithm4_rect.collidepoint(self.pos):
+                                self.aiplayer1 = 4
                         self.check_turn = True
                     else:
                         if self.aiplayer2 is None:
@@ -548,6 +556,8 @@ class Game(AI, MCTs):
                                     self.aiplayer2 = 2
                                 elif self.algorithm3_rect.collidepoint(self.pos):
                                     self.aiplayer2 = 3
+                                elif self.algorithm4_rect.collidepoint(self.pos):
+                                    self.aiplayer2 = 4
                         else:
                             if self.game_over==False:
                                 if self.check_turn:
@@ -557,6 +567,8 @@ class Game(AI, MCTs):
                                         self.minimax_move(self.player)
                                     elif self.aiplayer1 == 3:
                                         self.negamax_move(self.player)
+                                    elif self.aiplayer1 == 4:
+                                        self.markers = self.getBestNextMove(self.markers, self.player)
                                     self.check_turn = False
                                     self.check_game_over()
                                 else:
@@ -566,6 +578,8 @@ class Game(AI, MCTs):
                                         self.minimax_move(self.player2)
                                     elif self.aiplayer2 == 3:
                                         self.negamax_move(self.player2)
+                                    elif self.aiplayer1 == 4:
+                                        self.markers = self.getBestNextMove(self.markers, self.player2)
                                     self.check_turn = True
                                     self.check_game_over()   
                             if self.game_over == True:
