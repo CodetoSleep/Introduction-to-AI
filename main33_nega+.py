@@ -223,7 +223,7 @@ class MCTs(Board):
             return True
         return False
     def getNextPlayer(self, player):
-        return -player
+        return player*(-1)
     def getBestNextMove(self, currentBoard, aimove):
         evaluations = {}
         for generation in range(self.numberOfSimulations):
@@ -244,7 +244,7 @@ class MCTs(Board):
                 
                 score -= 1
 
-                player = self.getNextPlayer(aimove)
+                player = self.getNextPlayer(player)
                 nextMoves = self.getNextMoves(boardCopy,player)
             
             firstMove = simulationMoves[0]
@@ -578,7 +578,7 @@ class Game(AI, MCTs):
                                         self.minimax_move(self.player2)
                                     elif self.aiplayer2 == 3:
                                         self.negamax_move(self.player2)
-                                    elif self.aiplayer1 == 4:
+                                    elif self.aiplayer2 == 4:
                                         self.markers = self.getBestNextMove(self.markers, self.player2)
                                     self.check_turn = True
                                     self.check_game_over()   
