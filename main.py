@@ -3,6 +3,7 @@ import random
 from pygame import mixer
 from pygame.locals import *
 from copy import deepcopy
+from math import inf
 import ast
 
 # class Node:
