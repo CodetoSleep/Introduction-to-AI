@@ -6,15 +6,6 @@ from copy import deepcopy
 from math import inf
 import ast
 
-# class Node:
-#     def __init__(self, board, aimove, move):
-#         self.wins = 0.0
-#         self.games = 0.0
-#         self.move = move
-#         self.board = board
-#         self.player_id = aimove
-#         self.children = []
-
 class Board:
     def __init__(self):
         self.player = 1
@@ -186,7 +177,7 @@ class AI(Board):
 class MCTs(Board):
     def __init__(self):
         super().__init__()
-        self.numberOfSimulations = 15000
+        self.numberOfSimulations = 10000
     def getBoardCopy(self, board):
         boardCopy = deepcopy(board)
         return boardCopy
