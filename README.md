@@ -11,5 +11,6 @@ After successfully running all the requirements, you navigate to the destination
 	```python main.py```
 Or
 	```python3 main.py```
+	
   ![image](https://user-images.githubusercontent.com/117247229/210215908-1a87caa5-1da7-45ae-bf3e-f4bc4c52a6ab.png)
 
