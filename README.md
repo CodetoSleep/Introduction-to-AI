@@ -1,5 +1,5 @@
 # Introduction_to_AI
-
+Here is our project at course IT3160E at HUST colab by 4 members
 ## Set up the environments:
 Our program was written in Python 3
   
